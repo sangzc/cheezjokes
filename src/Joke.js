@@ -3,9 +3,9 @@ import React, { Component } from 'react';
 /** component for joke, displays text, score, upvote button, and downvote button */
 class Joke extends Component {
 
-    shouldComponentUpdate(nextProps) {
-        return this.props.score !== nextProps.score
-    }
+    // shouldComponentUpdate(nextProps) {
+    //     return this.props.score !== nextProps.score
+    // }
 
     render() {
     return (

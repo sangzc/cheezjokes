@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import Joke from './Joke';
 import axios from 'axios';
 import octospin from './octospin.gif';
+const URL = "https://icanhazdadjoke.com"
 
 /** JokeList class to define the list of cheeZjokes */
 class JokeList extends Component {
@@ -18,33 +19,53 @@ class JokeList extends Component {
 
     async componentDidMount() {
         try {
+            
+            const jokes = [];
+            const seen = new Set();
 
-            /** FIXME: get the random version of this url */
-            const response = await axios.get(
-                "https://icanhazdadjoke.com/search",
-                {
-                    headers: {
-                        Accept: "application/json"
-                    },
-                    params: {
-                        limit: 10
-                    }
-                });
+            while (jokes.length < 20) {
+                const response = await axios.get(
+                    URL,
+                    {
+                        headers: {
+                            Accept: "application/json"
+                        },
+                        
+                    });
+                
+                const { id, joke } = response.data;
+
+                if (seen.has(id)) {
+                    continue;
+                } else {
+                    seen.add(id);
+                    jokes.push({ id, joke, score: 0 });
+                }
+    
+            }
 
             this.setState({
-                jokes: response.data.results.map(joke =>
-                    ({ ...joke, score: 0 })
-                ),
+                jokes,
                 loading: false
-            })
+            });
+
         } catch (err) {
             this.setState({
                 error: true
             })
         }
     }
-    /** FIXME: Internal method used for hanldeUpVote and handleDownVote */
-    _vote(id, delta=1){
+    /** Internal method used for hanldeUpVote and handleDownVote */
+    _vote(st, id, delta) {
+
+        const jokes = st.jokes.map(j => {
+            if (j.id === id) {
+                j.score = j.score + delta
+            }
+            return j
+        })
+
+        return jokes.sort((a, b) => b.score - a.score)
 
     }
 
@@ -52,26 +73,17 @@ class JokeList extends Component {
     handleUpVote(id) {
         this.setState(st => {
             return {
-                jokes: st.jokes.map(j => {
-                    if (j.id === id) {
-                        j.score++
-                    }
-                    return j
-                })
+                jokes: this._vote(st, id, 1)
             }
         })
     }
 
     /** decrements score by 1 */
     handleDownVote(id) {
+        
         this.setState(st => {
             return {
-                jokes: st.jokes.map(j => {
-                    if (j.id === id) {
-                        j.score--
-                    }
-                    return j
-                })
+                jokes: this._vote(st, id, -1)
             }
         })
 
